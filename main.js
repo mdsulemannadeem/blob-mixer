@@ -121,7 +121,7 @@ const material = new CustomShaderMaterial({
   uniforms,
 });
 
-const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 50)); // Reduce detail for mobile
+const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 70));
 mergedGeometry.computeTangents();
 
 const sphere = new THREE.Mesh(mergedGeometry, material);
@@ -138,20 +138,11 @@ rgbeLoader.load(
 );
 
 window.addEventListener("resize", () => {
-  // Update camera aspect ratio
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-
-  // Resize renderer to match new window size
   renderer.setSize(window.innerWidth, window.innerHeight);
-
-  // Adjust pixel ratio for high-DPI screens
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 });
-
-// Ensure the canvas starts with the correct size
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio
 
 const clock = new THREE.Clock();
 
@@ -174,22 +165,12 @@ const texts = blobs.map((blob, index) => {
   myText.material = textMaterial;
   myText.position.set(0, 0, 2);
   if (index !== 0) myText.scale.set(0, 0, 0);
-
-  // Dynamically adjust font size based on screen width
-  myText.fontSize = Math.min(window.innerWidth / 4000, 0.1); // Limit max size
   myText.letterSpacing = -0.08;
+  myText.fontSize = window.innerWidth / 4000;
   myText.glyphGeometryDetail = 20;
   myText.sync();
   scene.add(myText);
   return myText;
-});
-
-// Update text size on window resize
-window.addEventListener("resize", () => {
-  texts.forEach((text) => {
-    text.fontSize = Math.min(window.innerWidth / 4000, 0.1);
-    text.sync();
-  });
 });
 
 window.addEventListener("wheel", (e) => {
