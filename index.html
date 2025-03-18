@@ -3,12 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Blob Mixer</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
 </head>
 <body class="w-full bg-[#333]">
-  <canvas class="fixed top-0 left-0" id="canvas"></canvas>
+  <canvas id="canvas"></canvas>
   <script type="module" src="main.js"></script>
 </body>
 </html>
