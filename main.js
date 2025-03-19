@@ -106,10 +106,16 @@ const uniforms = {
   uSmallWaveTimeFrequency: { value: 0.3 },
 };
 
+// Preload all textures asynchronously to avoid delays during runtime
+const preloadedTextures = {};
+blobs.forEach((blob) => {
+  preloadedTextures[blob.config.map] = textureLoader.load(`./gradients/${blob.config.map}.png`);
+});
+
 const material = new CustomShaderMaterial({
   baseMaterial: THREE.MeshPhysicalMaterial,
   vertexShader: vertexShaders,
-  map: textureLoader.load(`./gradients/${blobs[currentIndex].config.map}.png`),
+  map: preloadedTextures[blobs[currentIndex].config.map],
   metalness: blobs[currentIndex].config.metalness,
   roughness: blobs[currentIndex].config.roughness,
   envMapIntensity: blobs[currentIndex].config.envMapIntensity,
@@ -121,7 +127,8 @@ const material = new CustomShaderMaterial({
   uniforms,
 });
 
-const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 70));
+// Reduce geometry complexity by lowering the subdivision level
+const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 30)); // Reduced from 70 to 30
 mergedGeometry.computeTangents();
 
 const sphere = new THREE.Mesh(mergedGeometry, material);
@@ -136,13 +143,6 @@ rgbeLoader.load(
     scene.environment = texture;
   }
 );
-
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-});
 
 const clock = new THREE.Clock();
 
@@ -173,8 +173,33 @@ const texts = blobs.map((blob, index) => {
   return myText;
 });
 
+// Call updateResponsiveProperties after texts are initialized
+updateResponsiveProperties();
+
+// Function to update responsive properties
+function updateResponsiveProperties() {
+  // Adjust font size based on screen width
+  const fontSize = window.innerWidth / 4000;
+  texts.forEach((text) => {
+    text.fontSize = fontSize;
+    text.sync();
+  });
+
+  // Update renderer size and camera aspect ratio
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+}
+
+// Call updateResponsiveProperties on window resize
+window.addEventListener("resize", updateResponsiveProperties);
+
+// Debounce the wheel event to prevent excessive calls
+let wheelTimeout;
 window.addEventListener("wheel", (e) => {
-  if (isAnimating) return;
+  if (isAnimating || wheelTimeout) return;
+  wheelTimeout = setTimeout(() => (wheelTimeout = null), 200); // Debounce for 200ms
   isAnimating = true;
   let direction = Math.sign(e.deltaY);
   let next = (currentIndex + direction + blobs.length) % blobs.length;
@@ -184,7 +209,7 @@ window.addEventListener("wheel", (e) => {
 
   gsap.to(textMaterial.uniforms.progress, {
     value: 0.5,
-    duration: 1,
+    duration: 0.8, // Reduced duration for faster animations
     ease: "linear",
     onComplete: () => {
       currentIndex = next;
@@ -195,19 +220,19 @@ window.addEventListener("wheel", (e) => {
 
   gsap.to(texts[currentIndex].position, {
     x: -direction * 3,
-    duration: 1,
+    duration: 0.8, // Reduced duration
     ease: "power2.inOut",
   });
 
   gsap.to(sphere.rotation, {
-    y: sphere.rotation.y + Math.PI * 4 * -direction,
-    duration: 1,
+    y: sphere.rotation.y + Math.PI * 2 * -direction, // Reduced rotation for faster animation
+    duration: 0.8,
     ease: "power2.inOut",
   });
 
   gsap.to(texts[next].position, {
     x: 0,
-    duration: 1,
+    duration: 0.8,
     ease: "power2.inOut",
   });
 
@@ -216,13 +241,14 @@ window.addEventListener("wheel", (e) => {
     r: bg.r,
     g: bg.g,
     b: bg.b,
-    duration: 1,
+    duration: 0.8,
     ease: "linear",
   });
 
   updateBlob(blobs[next].config);
 });
 
+// Use preloaded textures in updateBlob
 function updateBlob(config) {
   if (config.uPositionFrequency !== undefined)
     gsap.to(material.uniforms.uPositionFrequency, {
@@ -256,8 +282,8 @@ function updateBlob(config) {
     });
   if (config.map !== undefined) {
     setTimeout(() => {
-      material.map = textureLoader.load(`./gradients/${config.map}.png`);
-    }, 400);
+      material.map = preloadedTextures[config.map];
+    }, 200); // Reduced delay
   }
   if (config.roughness !== undefined)
     gsap.to(material, {
