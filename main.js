@@ -87,7 +87,8 @@ const renderer = new THREE.WebGLRenderer({
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); // Limit pixel ratio to reduce GPU workload
+renderer.setSize(window.innerWidth, window.innerHeight, false); // Avoid unnecessary resizing
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 renderer.outputEncoding = THREE.sRGBEncoding;
@@ -128,7 +129,7 @@ const material = new CustomShaderMaterial({
 });
 
 // Reduce geometry complexity by lowering the subdivision level
-const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 30)); // Reduced from 70 to 30
+const mergedGeometry = mergeVertices(new THREE.IcosahedronGeometry(1, 20)); // Reduced from 30 to 20
 mergedGeometry.computeTangents();
 
 const sphere = new THREE.Mesh(mergedGeometry, material);
