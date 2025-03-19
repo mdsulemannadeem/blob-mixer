@@ -249,6 +249,76 @@ window.addEventListener("wheel", (e) => {
   updateBlob(blobs[next].config);
 });
 
+// Variables to track touch gestures
+let touchStartX = 0;
+let touchEndX = 0;
+
+// Function to handle touch start
+window.addEventListener("touchstart", (e) => {
+  touchStartX = e.changedTouches[0].clientX;
+});
+
+// Function to handle touch end
+window.addEventListener("touchend", (e) => {
+  touchEndX = e.changedTouches[0].clientX;
+  handleSwipe();
+});
+
+// Function to handle swipe gestures
+function handleSwipe() {
+  if (isAnimating) return;
+
+  const swipeDistance = touchEndX - touchStartX;
+  if (Math.abs(swipeDistance) > 50) { // Minimum swipe distance threshold
+    isAnimating = true;
+    const direction = swipeDistance > 0 ? -1 : 1; // Determine swipe direction
+    let next = (currentIndex + direction + blobs.length) % blobs.length;
+
+    texts[next].scale.set(1, 1, 1);
+    texts[next].position.x = direction * 3.5;
+
+    gsap.to(textMaterial.uniforms.progress, {
+      value: 0.5,
+      duration: 0.8,
+      ease: "linear",
+      onComplete: () => {
+        currentIndex = next;
+        isAnimating = false;
+        textMaterial.uniforms.progress.value = 0;
+      },
+    });
+
+    gsap.to(texts[currentIndex].position, {
+      x: -direction * 3,
+      duration: 0.8,
+      ease: "power2.inOut",
+    });
+
+    gsap.to(sphere.rotation, {
+      y: sphere.rotation.y + Math.PI * 2 * -direction,
+      duration: 0.8,
+      ease: "power2.inOut",
+    });
+
+    gsap.to(texts[next].position, {
+      x: 0,
+      duration: 0.8,
+      ease: "power2.inOut",
+    });
+
+    const bg = new THREE.Color(blobs[next].background);
+    gsap.to(scene.background, {
+      r: bg.r,
+      g: bg.g,
+      b: bg.b,
+      duration: 0.8,
+      ease: "linear",
+    });
+
+    updateBlob(blobs[next].config);
+  }
+}
+
 // Use preloaded textures in updateBlob
 function updateBlob(config) {
   if (config.uPositionFrequency !== undefined)
